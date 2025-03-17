@@ -6,7 +6,6 @@ if coffee_size not in ["small", "medium", "large"]:
 
 extra_short= input("do you need Extra shot ? yes/no")
 
-
 if extra_short=="yes":
     order = coffee_size + " coffee with an extra short"
 else:
