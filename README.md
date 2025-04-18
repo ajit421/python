@@ -6,7 +6,7 @@ Welcome to the **Python Learning Repository**! This repository is a curated coll
 
 - [About](#about)
 
-- [Directory Structure](#directory-structure)
+- [Rectory Structure](#rectory-structure)
 
 - [Roadmap](#roadmap)
 
