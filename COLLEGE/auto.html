@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>fast.com auto-refresh controller (5s)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px; max-width:720px; }
+    button { margin-right: 8px; padding: 8px 12px; border-radius:6px; border:1px solid #ccc; background:#f5f5f5; cursor:pointer; }
+    button:disabled { opacity:0.5; cursor:default; }
+    .hint { color:#555; margin-top:12px; }
+  </style>
+</head>
+<body>
+  <h2>fast.com auto-refresh controller — 5 second interval</h2>
+  <p>This page opens <code>https://fast.com</code> in a new window (or tab) and refreshes it every 5 seconds. Keep this controller open while it runs.</p>
+
+  <div>
+    <button id="openStart">Open & Start</button>
+    <button id="stop" disabled>Stop</button>
+    <button id="close" disabled>Close</button>
+  </div>
+
+  <p class="hint">Note: If the browser blocks popups, allow popups for this page. The controller must remain open for auto-refresh to continue.</p>
+
+  <script>
+    const TARGET = 'https://fast.com/';
+    const INTERVAL_MS = 5000; // 5 seconds
+
+    let winRef = null;
+    let timerId = null;
+
+    const openStartBtn = document.getElementById('openStart');
+    const stopBtn = document.getElementById('stop');
+    const closeBtn = document.getElementById('close');
+
+    function openAndStart() {
+      // try to reuse same named window/tab
+      winRef = window.open(TARGET, 'fastRefreshWindow', 'noopener');
+
+      if (!winRef) {
+        alert('Popup blocked. Please allow popups for this page and try again.');
+        return;
+      }
+
+      openStartBtn.disabled = true;
+      stopBtn.disabled = false;
+      closeBtn.disabled = false;
+
+      // Clear any prior timer
+      if (timerId) clearInterval(timerId);
+
+      timerId = setInterval(() => {
+        try {
+          if (!winRef || winRef.closed) {
+            clearInterval(timerId);
+            timerId = null;
+            openStartBtn.disabled = false;
+            stopBtn.disabled = true;
+            closeBtn.disabled = true;
+            winRef = null;
+            return;
+          }
+          // reload the opened window/tab (allowed for windows the opener created)
+          winRef.location.reload();
+          try { winRef.focus(); } catch(e) {}
+        } catch (e) {
+          console.warn('Refresh failed:', e);
+        }
+      }, INTERVAL_MS);
+    }
+
+    function stopRefreshing() {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+        stopBtn.disabled = true;
+        openStartBtn.disabled = false;
+      }
+    }
+
+    function closeWindow() {
+      if (winRef && !winRef.closed) {
+        try { winRef.close(); } catch(e) {}
+      }
+      winRef = null;
+      if (timerId) { clearInterval(timerId); timerId = null; }
+      openStartBtn.disabled = false;
+      stopBtn.disabled = true;
+      closeBtn.disabled = true;
+    }
+
+    // Auto-start on load (comment out if you prefer manual start)
+    window.addEventListener('load', () => {
+      // Delay a tiny bit so browser can prompt popup allowing if needed
+      setTimeout(openAndStart, 200);
+    });
+
+    openStartBtn.addEventListener('click', openAndStart);
+    stopBtn.addEventListener('click', stopRefreshing);
+    closeBtn.addEventListener('click', closeWindow);
+
+    // Clean up if this controller is closed
+    window.addEventListener('beforeunload', () => {
+      if (winRef && !winRef.closed) {
+        try { winRef.close(); } catch(e) {}
+      }
+    });
+  </script>
+</body>
+</html>
